@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pix Generator Pro</title>
+    <style>
+        :root {
+            --primary: #0052CC;
+            --success: #28a745;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --bg-body: #f0f2f5;
+            --bg-card: #ffffff;
+            --border: #dee2e6;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-body); padding: 15px; }
+        .container { max-width: 450px; margin: 0 auto; }
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--text-muted); }
+        .input-group input, .input-group select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; }
+        .row { display: flex; gap: 10px; }
+        .row .input-group { flex: 1; }
+        .btn-main { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; font-size: 1rem; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        #receipt-view { display: none; }
+        .receipt-card { background: var(--bg-card); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 20px; }
+        .receipt-header { background: var(--primary); color: white; padding: 20px; text-align: center; position: relative; }
+        .status-badge { position: absolute; top: 15px; right: 15px; background: var(--success); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+        .receipt-body { padding: 20px; }
+        .value-box { text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px dashed var(--border); }
+        .value-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; }
+        .value-amount { font-size: 2.2rem; font-weight: 700; }
+        .info-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 0.9rem; border-bottom: 1px solid var(--bg-body); }
+        .info-label { color: var(--text-muted); font-weight: 500; }
+        .info-value { font-weight: 600; text-align: right; max-width: 60%; word-break: break-word; }
+        .section-title { font-size: 0.85rem; font-weight: 700; color: var(--primary); margin: 20px 0 10px 0; text-transform: uppercase; }
+        .qr-section { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+        #qr-container { display: inline-block; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: white; }
+        .code-box { background: var(--bg-body); padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; word-break: break-all; margin-bottom: 10px; max-height: 100px; overflow-y: auto; }
+        .btn-secondary { width: 100%; padding: 12px; background: white; border: 1px solid var(--border); border-radius: 6px; font-weight: 600; color: var(--primary); cursor: pointer; margin-top: 10px; }
+        .error-box { background: #fff3cd; color: #856404; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.85rem; display: none; }
+        .qr-caption { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- TELA DE FORMULÁRIO -->
+    <div id="form-view">
+        <h1 style="text-align:center; color:var(--primary); margin-bottom:10px;">Gerador de Comprovante Pix</h1>
+        <p style="text-align:center; font-size:0.85rem; color:var(--text-muted); margin-bottom:20px;">Preencha os dados e clique em gerar</p>
+
+        <div class="input-group">
+            <label>Nome do Remetente</label>
+            <input type="text" id="senderName" value="João da Silva">
+        </div>
+        <div class="row">
+            <div class="input-group">
+                <label>Banco Remetente</label>
+                <select id="senderBank">
+                    <option value="Nubank">Nubank</option>
+                    <option value="Itaú">Itaú</option>
+                    <option value="Bradesco">Bradesco</option>
+                    <option value="Caixa">Caixa</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Chave Remetente</label>
+                <input type="text" id="senderKey" value="joao@email.com">
+            </div>
+        </div>
+
+        <div class="section-title">Destinatário</div>
+        <div class="input-group">
+            <label>Nome do Destinatário</label>
+            <input type="text" id="receiverName" value="Mercado Central LTDA">
+        </div>
+        <div class="row">
+            <div class="input-group">
+                <label>Banco Destinatário</label>
+                <select id="receiverBank">
+                    <option value="Itaú">Itaú</option>
+                    <option value="Nubank">Nubank</option>
+                    <option value="Bradesco">Bradesco</option>
+                    <option value="Caixa">Caixa</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Chave Destinatário</label>
+                <input type="text" id="receiverKey" value="123.456.789-00">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="input-group">
+                <label>Valor (R$)</label>
+                <input type="number" id="value" step="0.01" value="150.00">
+            </div>
+            <div class="input-group">
+                <label>Data e Hora</label>
+                <input type="datetime-local" id="datePicker">
+            </div>
+        </div>
+
+        <button class="btn-main" onclick="generateReceipt()">Gerar Comprovante</button>
+        <div id="error-box" class="error-box"></div>
+    </div>
+
+    <!-- TELA DE COMPROVANTE -->
+    <div id="receipt-view">
+        <div class="receipt-card">
+            <div class="receipt-header">
+                <span class="status-badge">Efetivado</span>
+                <h2>Comprovante de Transferência</h2>
+                <p>Pix</p>
+            </div>
+            <div class="receipt-body">
+                <div class="value-box">
+                    <div class="value-label">Valor Transferido</div>
+                    <div class="value-amount" id="disp-amount">R$ 0,00</div>
+                </div>
+                
+                <div class="info-row"><span class="info-label">Data/Hora</span><span class="info-value" id="disp-date">--</span></div>
+                <div class="info-row"><span class="info-label">ID da Transação</span><span class="info-value" id="disp-txid">--</span></div>
+                
+                <div class="section-title">Destinatário</div>
+                <div class="info-row"><span class="info-label">Nome</span><span class="info-value" id="disp-recv-name">--</span></div>
+                <div class="info-row"><span class="info-label">Banco</span><span class="info-value" id="disp-recv-bank">--</span></div>
+                <div class="info-row"><span class="info-label">Chave</span><span class="info-value" id="disp-recv-key">--</span></div>
+                
+                <div class="section-title">Remetente</div>
+                <div class="info-row"><span class="info-label">Nome</span><span class="info-value" id="disp-sent-name">--</span></div>
+                <div class="info-row"><span class="info-label">Banco</span><span class="info-value" id="disp-sent-bank">--</span></div>
+                <div class="info-row"><span class="info-label">Chave</span><span class="info-value" id="disp-sent-key">--</span></div>
+                
+                <div class="qr-section">
+                    <div id="qr-container"></div>
+                    <div class="qr-caption">Escaneie para copiar o código Pix</div>
+                    <div class="code-box" id="pix-code">--</div>
+                    <button class="btn-secondary" onclick="copyPixCode()">Copiar Código Pix</button>
+                    <button class="btn-main" onclick="resetForm()">Nova Transação</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize date picker to now
+    const now = new Date();
+    document.getElementById('datePicker').value = now.toISOString().slice(0, 16);
+
+    function generateReceipt() {
+        // Get values
+        const senderName = document.getElementById('senderName').value || "Remetente";
+        const senderBank = document.getElementById('senderBank').value;
+        const senderKey = document.getElementById('senderKey').value || "N/A";
+        const receiverName = document.getElementById('receiverName').value || "Destinatário";
+        const receiverBank = document.getElementById('receiverBank').value;
+        const receiverKey = document.getElementById('receiverKey').value || "N/A";
+        const value = parseFloat(document.getElementById('value').value) || 0;
+        const dateInput = document.getElementById('datePicker').value;
+
+        // Validation
+        if (value <= 0) {
+            showError("O valor deve ser maior que zero.");
+            return;
+        }
+
+        // Format Date
+        let dateDisplay = "N/D";
+        if (dateInput) {
+            const d = new Date(dateInput);
+            dateDisplay = d.toLocaleDateString('pt-BR') + " " + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        }
+
+        // Generate fake TX ID (UUID-like)
+        const txId = "TX-" + Math.random().toString(36).substring(2, 15).toUpperCase();
+
+        // Populate DOM
+        document.getElementById('disp-amount').textContent = "R$ " + value.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+        document.getElementById('disp-date').textContent = dateDisplay;
+        document.getElementById('disp-txid').textContent = txId;
+        
+        document.getElementById('disp-recv-name').textContent = receiverName;
+        document.getElementById('disp-recv-bank').textContent = receiverBank;
+        document.getElementById('disp-recv-key').textContent = receiverKey;
+        
+        document.getElementById('disp-sent-name').textContent = senderName;
+        document.getElementById('disp-sent-bank').textContent = senderBank;
+        document.getElementById('disp-sent-key').textContent = senderKey;
+
+        // Generate Pix Payload (BR Code)
+        const emv = generateEMV(senderName, senderBank, senderKey, receiverName, receiverBank, receiverKey, value, txId);
+        document.getElementById('pix-code').textContent = emv;
+
+        // Generate QR Code
+        generateQR(emv);
+
+        // Switch View
+        document.getElementById('form-view').style.display = 'none';
+        document.getElementById('receipt-view').style.display = 'block';
+        window.scrollTo(0, 0);
+    }
+
+    function showError(msg) {
+        const box = document.getElementById('error-box');
+        box.textContent = msg;
+        box.style.display = 'block';
+        setTimeout(() => box.style.display = 'none', 3000);
+    }
+
+    function resetForm() {
+        document.getElementById('receipt-view').style.display = 'none';
+        document.getElementById('form-view').style.display = 'block';
+        // Reset date to now
+        const now = new Date();
+        document.getElementById('datePicker').value = now.toISOString().slice(0, 16);
+    }
+
+    function copyPixCode() {
+        const code = document.getElementById('pix-code').textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            alert("Código Pix copiado!");
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    }
+
+    // Simplified EMV BR Code Generator
+    function generateEMV(senderName, senderBank, senderKey, receiverName, receiverBank, receiverKey, amount, txId) {
+        // Standard BR Code structure
+        // 00: Payload Format Indicator (br.gov.bcb.pix)
+        // 01: Merchant Account Information (Key)
+        // 26: Merchant Account Information (Nested)
+        // 52: Transaction Currency (986 = BRL)
+        // 53: Amount
+        // 58: Country (BR)
+        // 59: Merchant Name
+        // 60: Merchant City
+        // 62: Additional Data (05: Reference)
+        // 63: CRC16 (Placeholder)
+
+        const merchantAccount = `0014br.gov.bcb.pix01${String(receiverKey).length}${receiverKey}`;
+        
+        // Build nested 26
+        const nested26 = merchantAccount;
+        const payload = `
+000201
+26${String(nested26).length}${nested26}
+52040000
+5303986
+54${String(amount.toFixed(2)).length}${amount.toFixed(2)}
+5802BR
+59${String(receiverName).length}${receiverName}
+6009SAO PAULO
+62${String(`05${String(txId).length}${txId}`).length}${`05${String(txId).length}${txId}`}
+63040000
+`;
+        return payload.replace(/\s/g, '');
+    }
+
+    // QR Code Generation using QRious CDN
+    function generateQR(data) {
+        const container = document.getElementById('qr-container');
+        container.innerHTML = ''; // Clear previous
+        
+        // Create a script tag to load QRious if not already loaded
+        if (!window.QRious) {
+            const script = document.createElement('script');
+            script.src = "https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js";
+            script.onload = function() {
+                renderQR(data, container);
+            };
+            document.head.appendChild(script);
+        } else {
+            renderQR(data, container);
+        }
+    }
+
+    function renderQR(data, container) {
+        new QRious({
+            element: container,
+            value: data,
+            size: 180,
+            level: 'M'
+        });
+    }
+</script>
+
+</body>
+</html>
